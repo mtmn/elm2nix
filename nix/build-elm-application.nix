@@ -6,6 +6,7 @@
 , uglify-js
 
 , generateRegistryDat
+, installPatchScript
 , prepareElmHomeScript
 }:
 
@@ -15,6 +16,8 @@ lib.extendMkDerivation {
   extendDrvArgs =
     finalAttrs:
     { elmLock # Path to elm.lock
+
+    , elmPackagePatches ? [] # A list of derivations created using mkPatch
 
     , doElmFormat ? false # Whether or not to check if a given set of Elm files are formatted
     , elmFormatSourceFiles ? [ "src" ] # A list of Elm files or directories containing Elm files
@@ -70,6 +73,7 @@ lib.extendMkDerivation {
 
       let
         registryDat = generateRegistryDat { inherit elmLock; };
+        doElmPackagePatches = builtins.isList elmPackagePatches && builtins.length elmPackagePatches > 0;
         minifier = if useTerser then "terser" else "uglifyjs";
         toCompress = if doMinification then outputMin else output;
       in
@@ -90,11 +94,16 @@ lib.extendMkDerivation {
 
         preBuildPhases = [
           "prepareElmHomePhase"
+          (lib.optionalString doElmPackagePatches "patchElmPackagesPhase")
           (lib.optionalString doElmFormat "elmFormatPhase")
           (lib.optionalString doElmTest "elmTestPhase")
         ];
 
         prepareElmHomePhase = prepareElmHomeScript { inherit elmLock registryDat; };
+
+        patchElmPackagesPhase = lib.optionalString doElmPackagePatches (
+          lib.concatStringsSep "\n" (builtins.map installPatchScript elmPackagePatches)
+        );
 
         elmFormatPhase = lib.optionalString doElmFormat ''
           elm-format ${builtins.concatStringsSep " " elmFormatSourceFiles} --validate

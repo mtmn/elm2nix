@@ -132,6 +132,18 @@
         "sha256": "0p0vhs04kgw3m1fa67jpypkmjkbacl86q690j632n0xwpbckknjn"
     },
     {
+        "author": "robinheghan",
+        "package": "murmur3",
+        "version": "1.0.0",
+        "sha256": "1bwxmcajyigcvpqm63sr8ai3jiz2kfzhj3454dryi9sppssfzilf"
+    },
+    {
+        "author": "rtfeldman",
+        "package": "elm-css",
+        "version": "18.0.0",
+        "sha256": "0xkkra7wga3davy8ys0h17lcvsw2p2bb3r12s9wzvkcqgzlknj8a"
+    },
+    {
         "author": "rtfeldman",
         "package": "elm-hex",
         "version": "1.0.0",

@@ -29,6 +29,8 @@ There are the derivations for building various instances of the example Elm web 
 - `example` - Uses a normal `elm make` compilation
 - `debuggedExample` - Compiles with `elm make --debug`
 - `formattingCheckedExample` - Shows `elm-format` usage
+- `elmSafeVirtualDomExample` - Shows how to make use of [`lydell/elm-safe-virtual-dom`](https://github.com/lydell/elm-safe-virtual-dom)
+- `elmSafeVirtualDomElmCssExample` - Shows how to make use of `lydell/elm-safe-virtual-dom` with [`lydell/html`](https://github.com/lydell/html) replaced with [`omnibs/elm-css`](https://github.com/omnibs/elm-css/tree/safe)
 - `testedExample` - Shows `elm-test` usage
 - `reviewedExample` - Shows `elm-review` usage
 - `optimizedExample` - Compiles with `elm make --optimize`
@@ -46,6 +48,10 @@ There are the derivations for building various instances of the example Elm web 
 
 - `exampleFetchElmPackage` - Fetches version `1.0.2` of the `elm/browser` package
 - `exampleDotElmLinks` - Creates the Elm cache tailored for the example Elm web application
+- `lydellBrowser` - A patched version of `elm/browser` at version `1.0.2`
+- `lydellHtml` - A patched version of `elm/html` at version `1.0.1`
+- `lydellVirtualDom` - A patched version of `elm/virtual-dom` at version `1.0.5`
+- `omnibsElmCss` - A patched version of `rtfeldman/elm-css` at version `18.0.0`
 
 ### How to build the derivations?
 
@@ -62,4 +68,8 @@ nix repl
 > :lf .
 > :p outputs.scripts.x86_64-linux.examplePrepareElmHomeScript
 > :p outputs.scripts.x86_64-linux.exampleSymbolicLinksToPackagesScript
+> :p outputs.scripts.x86_64-linux.installLydellBrowserScript
+> :p outputs.scripts.x86_64-linux.installLydellHtmlScript
+> :p outputs.scripts.x86_64-linux.installLydellVirtualDomScript
+> :p outputs.scripts.x86_64-linux.installOmnibsElmCssScript
 ```

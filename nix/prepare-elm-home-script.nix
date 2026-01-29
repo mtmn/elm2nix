@@ -1,13 +1,12 @@
-{ dotElmLinks }:
+{ dotElmLinks, elmHome }:
 
 { elmLock
 , registryDat
-, directory ? ".elm"
 }:
 
 ''
-echo "Prepare ${directory} and set ELM_HOME=${directory}"
-cp -LR "${dotElmLinks { inherit elmLock registryDat; }}" ${directory}
-chmod -R +w ${directory}
-export ELM_HOME="$PWD/${directory}"
+echo "Prepare ${elmHome} and set ELM_HOME=${elmHome}"
+cp -LR "${dotElmLinks { inherit elmLock registryDat; }}" ${elmHome}
+chmod -R +w ${elmHome}
+export ELM_HOME="$PWD/${elmHome}"
 ''
