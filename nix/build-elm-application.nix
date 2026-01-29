@@ -89,16 +89,16 @@ lib.extendMkDerivation {
         dontConfigure = true;
 
         preBuildPhases = [
-          (lib.optionalString doElmFormat "elmFormatPhase")
           "prepareElmHomePhase"
+          (lib.optionalString doElmFormat "elmFormatPhase")
           (lib.optionalString doElmTest "elmTestPhase")
         ];
+
+        prepareElmHomePhase = prepareElmHomeScript { inherit elmLock registryDat; };
 
         elmFormatPhase = lib.optionalString doElmFormat ''
           elm-format ${builtins.concatStringsSep " " elmFormatSourceFiles} --validate
         '';
-
-        prepareElmHomePhase = prepareElmHomeScript { inherit elmLock registryDat; };
 
         elmTestPhase = lib.optionalString doElmTest ''
           if [ -d tests ]; then
