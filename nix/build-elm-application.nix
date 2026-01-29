@@ -19,11 +19,11 @@ lib.extendMkDerivation {
     , doElmFormat ? false # Whether or not to check if a given set of Elm files are formatted
     , elmFormatSourceFiles ? [ "src" ] # A list of Elm files or directories containing Elm files
 
-    , doElmReview ? false
-    , elmReviewFlags ? []
-
     , doElmTest ? false
     , elmTestFlags ? []
+
+    , doElmReview ? false
+    , elmReviewFlags ? []
 
     , entry ? "src/Main.elm" # :: String | [String]
 
