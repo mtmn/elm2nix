@@ -4,6 +4,12 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         elm2nix = pkgs.callPackage ./nix/elm2nix.nix {};
+
+        mkApp = { drv, description }: {
+          type = "app";
+          program = "${drv}";
+          meta.description = description;
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -48,10 +54,9 @@
 
         apps = {
           default = self.apps.${system}.elm2nix;
-          elm2nix = flake-utils.lib.mkApp { drv = elm2nix; } // {
-            meta = {
-              description = "The elm2nix CLI application";
-            };
+          elm2nix = mkApp {
+            drv = elm2nix;
+            description = "The elm2nix CLI application";
           };
         };
 
