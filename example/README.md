@@ -52,6 +52,13 @@ There are the derivations for building various instances of the example Elm web 
 - `lydellHtml` - A patched version of `elm/html` at version `1.0.1`
 - `lydellVirtualDom` - A patched version of `elm/virtual-dom` at version `1.0.5`
 - `omnibsElmCss` - A patched version of `rtfeldman/elm-css` at version `18.0.0`
+- `testScripts` - A derivation that writes the contents of the scripts to files so it's easier to inspect them. The following scripts are used:
+  - `examplePrepareElmHomeScript`
+  - `exampleSymbolicLinksToPackagesScript`
+  - `installLydellBrowserScript`
+  - `installLydellHtmlScript`
+  - `installLydellVirtualDomScript`
+  - `installOmnibsElmCssScript`
 
 ### How to build the derivations?
 
@@ -59,17 +66,10 @@ I usually use `nix build .#nameOfDerivation`. Add `-L` to view the logs in realt
 
 You can view the build output in the `result` directory.
 
-### How to view the scripts?
+### What's the best way to check that everything works as expected?
 
-A scripts attribute set is included in the outputs of the `flake.nix` which allows you to inspect how the helper scripts work. You can view them as follows:
+Run the checks.
 
-```
-nix repl
-> :lf .
-> :p outputs.scripts.x86_64-linux.examplePrepareElmHomeScript
-> :p outputs.scripts.x86_64-linux.exampleSymbolicLinksToPackagesScript
-> :p outputs.scripts.x86_64-linux.installLydellBrowserScript
-> :p outputs.scripts.x86_64-linux.installLydellHtmlScript
-> :p outputs.scripts.x86_64-linux.installLydellVirtualDomScript
-> :p outputs.scripts.x86_64-linux.installOmnibsElmCssScript
+```bash
+nix flake check
 ```

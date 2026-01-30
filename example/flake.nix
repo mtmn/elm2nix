@@ -70,6 +70,16 @@
           };
           elmLock = ./elm.lock;
         };
+
+        testScripts = pkgs.runCommand "test-scripts" {} ''
+          mkdir "$out"
+          echo "${examplePrepareElmHomeScript}" > "$out/examplePrepareElmHomeScript.txt"
+          echo "${exampleSymbolicLinksToPackagesScript}" > "$out/exampleSymbolicLinksToPackagesScript.txt"
+          echo "${installLydellBrowserScript}" > "$out/installLydellBrowserScript.txt"
+          echo "${installLydellHtmlScript}" > "$out/installLydellHtmlScript.txt"
+          echo "${installLydellVirtualDomScript}" > "$out/installLydellVirtualDomScript.txt"
+          echo "${installOmnibsElmCssScript}" > "$out/installOmnibsElmCssScript.txt"
+        '';
       in
       {
         devShells.default = pkgs.mkShell {
@@ -97,7 +107,9 @@
             lydellBrowser
             lydellHtml
             lydellVirtualDom
-            omnibsElmCss;
+            omnibsElmCss
+            testScripts
+            ;
 
           default = example;
 
@@ -232,16 +244,6 @@
           };
         };
 
-        scripts = {
-          inherit
-            examplePrepareElmHomeScript
-            exampleSymbolicLinksToPackagesScript
-            installLydellBrowserScript
-            installLydellHtmlScript
-            installLydellVirtualDomScript
-            installOmnibsElmCssScript;
-        };
-
         checks = {
           inherit
             exampleFetchElmPackage
@@ -251,6 +253,7 @@
             lydellHtml
             lydellVirtualDom
             omnibsElmCss
+            testScripts
             ;
 
           inherit (self.packages.${system})
