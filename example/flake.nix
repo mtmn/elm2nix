@@ -104,6 +104,7 @@
             elm2nix.packages.${system}.default
             pkgs.elmPackages.elm
             pkgs.elmPackages.elm-format
+            pkgs.elmPackages.elm-json
             pkgs.elmPackages.elm-review
             pkgs.elmPackages.elm-test
           ];
@@ -144,6 +145,16 @@
             ];
           };
 
+          #
+          # N.B. The omnibsElmCss patch won't be installed since we haven't installed
+          #      rtfeldman/elm-css version 18.0.0 into our example project.
+          #
+          # Steps to make it work:
+          #
+          # 1. elm install rtfeldman/elm-css
+          # 2. elm2nix lock elm.json review/elm.json
+          # 3. nix build .#elmSafeVirtualDomElmCssExample -L
+          #
           elmSafeVirtualDomElmCssExample = example.override {
             elmPackagePatches = [
               lydellBrowser

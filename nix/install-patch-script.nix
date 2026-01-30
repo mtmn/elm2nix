@@ -13,5 +13,8 @@ if [ -d ${to} ]; then
   rm -r ${to}
   cp -R ${from} ${to}
   chmod -R +w ${to}
+else
+  echo "Skipping patching from ${from} to ${to} since the destination doesn't exist"
+  echo "Are you sure you've installed ${drv.path}?"
 fi
 ''
