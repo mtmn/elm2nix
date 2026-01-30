@@ -22,14 +22,22 @@
             export PROJECT_ROOT="$PWD"
             export HSPEC_SKIP="(skip:network)"
 
+            b () {
+              cabal build
+            }
+
             lint () {
               hlint "$PROJECT_ROOT/src" "$PROJECT_ROOT/test"
             }
-            export -f lint
-
-            alias b='cabal build'
             alias l='lint'
-            alias t='cabal test'
+
+            t () {
+              cabal test
+            }
+
+            echo "Type 'b' to build"
+            echo "Type 'l' to lint"
+            echo "Type 't' to test"
           '';
         };
 
