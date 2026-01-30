@@ -198,10 +198,11 @@
           #
           # When you attempt to build this derivation it will fail as expected.
           #
-          combined2Example = optimized2Example.override {
-            entry = [ "src/Main.elm" "src/Workshop.elm" ];
-            output = "combined2.js";
-          };
+          # combined2Example = optimized2Example.override {
+          #   entry = [ "src/Main.elm" "src/Workshop.elm" ];
+          #   output = "combined2.js";
+          # };
+          #
 
           minifiedExample = optimized2Example.override {
             doMinification = true;
@@ -265,6 +266,36 @@
             installLydellHtmlScript
             installLydellVirtualDomScript
             installOmnibsElmCssScript;
+        };
+
+        checks = {
+          inherit
+            exampleFetchElmPackage
+            exampleDotElmLinks
+            example
+            lydellBrowser
+            lydellHtml
+            lydellVirtualDom
+            omnibsElmCss
+            ;
+
+          inherit (self.packages.${system})
+            debuggedExample
+            formattingCheckedExample
+            elmSafeVirtualDomExample
+            elmSafeVirtualDomElmCssExample
+            testedExample
+            reviewedExample
+            optimizedExample
+            optimized2Example
+            optimized3Example
+            combined1Example
+            minifiedExample
+            compressedExample
+            reportedExample
+            hashedExample
+            finalExample
+            ;
         };
       }
     );
