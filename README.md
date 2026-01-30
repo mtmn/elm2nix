@@ -1,6 +1,6 @@
 # elm2nix
 
-A rewrite of [`cachix/elm2nix`](https://github.com/cachix/elm2nix) with a few changes and improvements.
+A rewrite of [`cachix/elm2nix`](https://github.com/cachix/elm2nix) with major changes and improvements.
 
 These are some of the notable differences:
 
@@ -20,6 +20,7 @@ These are some of the notable differences:
     - [Show a report](https://guide.elm-lang.org/optimization/asset_size#scripts) about the changes in your file size due to minification and compression
     - Enable content hashing for cache busting purposes
     - Or completely customize portions of the build to your liking if you know how [`stdenv.mkDerivation`](https://nixos.org/manual/nixpkgs/stable/#chap-stdenv) works
+6. You can easily use [`lydell/elm-safe-virtual-dom`](https://github.com/lydell/elm-safe-virtual-dom) in your projects. More generally you can patch any published Elm package and make use of them in your projects.
 
 ## Usage
 
