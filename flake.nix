@@ -41,9 +41,18 @@
               cabal test
             }
 
+            c () {
+              lint
+              t
+              actionlint
+              nix flake check -L
+              (cd example && nix flake check -L)
+            }
+
             echo "Type 'b' to build"
             echo "Type 'l' to lint"
             echo "Type 't' to test"
+            echo "Type 'c' to run all checks"
           '';
         };
 
