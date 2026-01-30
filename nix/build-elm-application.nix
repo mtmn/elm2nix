@@ -7,17 +7,28 @@
 
 , generateRegistryDat
 , installPatchScript
+, mkPatch
 , prepareElmHomeScript
 }:
 
 lib.extendMkDerivation {
   constructDrv = stdenv.mkDerivation;
 
+  excludeDrvArgNames = [
+    "elmPackagePatches"
+  ];
+
   extendDrvArgs =
     finalAttrs:
     { elmLock # Path to elm.lock
 
-    , elmPackagePatches ? [] # A list of derivations created using mkPatch
+    , elmPackagePatches ? []
+    #
+    # A list containing any combination of either:
+    #
+    # 1. Derivations created using mkPatch
+    # 2. Arguments to the mkPatch function
+    #
 
     , doElmFormat ? false # Whether or not to check if a given set of Elm files are formatted
     , elmFormatSourceFiles ? [ "src" ] # A list of Elm files or directories containing Elm files
@@ -102,7 +113,23 @@ lib.extendMkDerivation {
         prepareElmHomePhase = prepareElmHomeScript { inherit elmLock registryDat; };
 
         patchElmPackagesPhase = lib.optionalString doElmPackagePatches (
-          lib.concatStringsSep "\n" (builtins.map installPatchScript elmPackagePatches)
+          lib.concatStringsSep "\n" (
+            builtins.map
+              (x:
+                if lib.isDerivation x && builtins.hasAttr "path" x then
+                  #
+                  # We enter here if `x == mkPatch args` for some arguments `args`
+                  #
+                  installPatchScript x
+                else
+                  #
+                  # Otherwise we assume that `x` is the attribute set
+                  # required for a `mkPatch` call
+                  #
+                  installPatchScript (mkPatch x)
+              )
+              elmPackagePatches
+          )
         );
 
         elmFormatPhase = lib.optionalString doElmFormat ''

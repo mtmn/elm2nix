@@ -9,7 +9,7 @@ let
   elm2nix = callPackage ./elm2nix.nix {};
 in
 rec {
-  buildElmApplication = lib.makeOverridable (callPackage ./build-elm-application.nix { inherit generateRegistryDat installPatchScript prepareElmHomeScript; });
+  buildElmApplication = lib.makeOverridable (callPackage ./build-elm-application.nix { inherit generateRegistryDat installPatchScript mkPatch prepareElmHomeScript; });
   generateRegistryDat = callPackage ./generate-registry-dat.nix { inherit elm2nix; };
   prepareElmHomeScript = callPackage ./prepare-elm-home-script.nix { inherit dotElmLinks elmHome; };
   mkPatch = callPackage ./mk-patch.nix {};
