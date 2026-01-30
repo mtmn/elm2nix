@@ -42,6 +42,10 @@
           default = self.apps.${system}.elm2nix;
           elm2nix = flake-utils.lib.mkApp { drv = elm2nix; };
         };
+
+        checks = {
+          inherit elm2nix;
+        };
       }
     ) // {
       lib =
