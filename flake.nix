@@ -21,6 +21,7 @@
             pkgs.cabal-install
             pkgs.cabal2nix
             pkgs.elmPackages.elm
+            pkgs.actionlint
           ];
 
           shellHook = ''
