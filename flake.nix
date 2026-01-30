@@ -48,7 +48,11 @@
 
         apps = {
           default = self.apps.${system}.elm2nix;
-          elm2nix = flake-utils.lib.mkApp { drv = elm2nix; };
+          elm2nix = flake-utils.lib.mkApp { drv = elm2nix; } // {
+            meta = {
+              description = "The elm2nix CLI application";
+            };
+          };
         };
 
         checks = {
