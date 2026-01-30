@@ -11,6 +11,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        fs = pkgs.lib.fileset;
         inherit (elm2nix.lib.elm2nix pkgs)
           buildElmApplication
           generateRegistryDat
@@ -92,7 +93,15 @@
 
         example = buildElmApplication {
           name = "example";
-          src = ./.;
+          src = fs.toSource {
+            root = ./.;
+            fileset = fs.unions [
+              ./review
+              ./src
+              ./tests
+              ./elm.json
+            ];
+          };
           elmLock = ./elm.lock;
         };
       in
