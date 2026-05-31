@@ -1,258 +1,219 @@
-{ brotli
-, elmPackages
-, lib
-, stdenv
-, terser
-, uglify-js
-
-, generateRegistryDat
-, installPatchesScript
-, prepareElmHomeScript
-}:
-
+{ brotli, elmPackages, lib, stdenv, terser, uglify-js, generateRegistryDat
+, installPatchesScript, prepareElmHomeScript, }:
 lib.extendMkDerivation {
   constructDrv = stdenv.mkDerivation;
 
-  excludeDrvArgNames = [
-    "elmPackagePatches"
-  ];
+  excludeDrvArgNames = [ "elmPackagePatches" ];
 
-  extendDrvArgs =
-    finalAttrs:
-    { elmLock # Path to elm.lock
+  extendDrvArgs = _:
+    { elmLock, # Path to elm.lock
+    elmPackagePatches ? [ ], doElmFormat ? false
+    , # Whether or not to check if a given set of Elm files are formatted
+    elmFormatSourceFiles ? [ "src" ]
+    , # A list of Elm files or directories containing Elm files
+    doElmTest ? false, elmTestFlags ? [ ], doElmReview ? false
+    , elmReviewFlags ? [ ], entry ? "src/Main.elm", # :: String | [String]
+    output ? "elm.js", # :: String
+    outputMin ? "${lib.removeSuffix ".js" output}.min.js"
+    , extraNativeBuildInputs ? [ ], enableDebugger ? false
+    , enableOptimizations ? false, optimizeLevel ? 1, # :: 1 | 2 | 3
+    doMinification ? false, useTerser ? false, # Use UglifyJS by default
+    doCompression ? false, gzipFlags ? [ "-9" ], brotliFlags ? [ "-Z" ]
+    , doReporting ? false, doContentHashing ? false, hashLength ? 8
+    , keepFilesWithNoHashInFilenames ? false, ... }:
+    assert !(enableDebugger && enableOptimizations)
+      || throw "You cannot enable both debugging and optimizations.";
+    assert !(enableDebugger && doMinification)
+      || throw "You cannot enable both debugging and minification.";
+    assert !(enableDebugger && doCompression)
+      || throw "You cannot enable both debugging and compression.";
+    let
+      hasMultipleEntries = builtins.isList entry && builtins.length entry >= 2;
+      useElmOptimizeLevel2 = enableOptimizations && optimizeLevel >= 2;
+    in assert !(hasMultipleEntries && useElmOptimizeLevel2)
+      || throw "elm-optimize-level-2 does not support multiple entries.";
+    let
+      registryDat = generateRegistryDat { inherit elmLock; };
+      doElmPackagePatches = builtins.isList elmPackagePatches
+        && builtins.length elmPackagePatches > 0;
+      minifier = if useTerser then "terser" else "uglifyjs";
+      toCompress = if doMinification then outputMin else output;
+    in {
+      nativeBuildInputs = builtins.concatLists [
+        ([ elmPackages.elm ] ++ lib.optional doElmFormat elmPackages.elm-format
+          ++ lib.optional doElmReview elmPackages.elm-review
+          ++ lib.optional doElmTest elmPackages.elm-test
+          ++ lib.optional useElmOptimizeLevel2 elmPackages.elm-optimize-level-2
+          ++ lib.optional doMinification
+          (if useTerser then terser else uglify-js)
+          ++ lib.optional doCompression brotli)
+        extraNativeBuildInputs
+      ];
 
-    , elmPackagePatches ? []
+      dontPatch = true;
+      dontConfigure = true;
 
-    , doElmFormat ? false # Whether or not to check if a given set of Elm files are formatted
-    , elmFormatSourceFiles ? [ "src" ] # A list of Elm files or directories containing Elm files
+      preBuildPhases = [
+        "prepareElmHomePhase"
+        (lib.optionalString doElmPackagePatches "patchElmPackagesPhase")
+        (lib.optionalString doElmFormat "elmFormatPhase")
+        (lib.optionalString doElmTest "elmTestPhase")
+      ];
 
-    , doElmTest ? false
-    , elmTestFlags ? []
+      prepareElmHomePhase =
+        prepareElmHomeScript { inherit elmLock registryDat; };
 
-    , doElmReview ? false
-    , elmReviewFlags ? []
+      patchElmPackagesPhase = lib.optionalString doElmPackagePatches
+        (installPatchesScript elmPackagePatches);
 
-    , entry ? "src/Main.elm" # :: String | [String]
+      elmFormatPhase = lib.optionalString doElmFormat ''
+        elm-format ${
+          builtins.concatStringsSep " " elmFormatSourceFiles
+        } --validate
+      '';
 
-    , output ? "elm.js" # :: String
-    , outputMin ? "${lib.removeSuffix ".js" output}.min.js"
+      elmTestPhase = lib.optionalString doElmTest ''
+        if [ -d tests ]; then
+          elm-test ${builtins.concatStringsSep " " elmTestFlags}
+        else
+          echo "Skipping elm-test since no tests/ directory was found"
+        fi
+      '';
 
-    , extraNativeBuildInputs ? []
-
-    , enableDebugger ? false
-
-    , enableOptimizations ? false
-    , optimizeLevel ? 1 # :: 1 | 2 | 3
-
-    , doMinification ? false
-    , useTerser ? false # Use UglifyJS by default
-
-    , doCompression ? false
-    , gzipFlags ? [ "-9" ]
-    , brotliFlags ? [ "-Z" ]
-
-    , doReporting ? false
-
-    , doContentHashing ? false
-    , hashLength ? 8
-    , keepFilesWithNoHashInFilenames ? false
-
-    , ...
-    } @ args:
-      assert !(enableDebugger && enableOptimizations)
-        || throw "You cannot enable both debugging and optimizations.";
-
-      assert !(enableDebugger && doMinification)
-        || throw "You cannot enable both debugging and minification.";
-
-      assert !(enableDebugger && doCompression)
-        || throw "You cannot enable both debugging and compression.";
-
-      let
-        hasMultipleEntries = builtins.isList entry && builtins.length entry >= 2;
-        useElmOptimizeLevel2 = enableOptimizations && optimizeLevel >= 2;
-      in
-      assert !(hasMultipleEntries && useElmOptimizeLevel2)
-        || throw "elm-optimize-level-2 does not support multiple entries.";
-
-      let
-        registryDat = generateRegistryDat { inherit elmLock; };
-        doElmPackagePatches = builtins.isList elmPackagePatches && builtins.length elmPackagePatches > 0;
-        minifier = if useTerser then "terser" else "uglifyjs";
-        toCompress = if doMinification then outputMin else output;
-      in
-      {
-        nativeBuildInputs = builtins.concatLists
-          [ ([ elmPackages.elm ]
-            ++ lib.optional doElmFormat elmPackages.elm-format
-            ++ lib.optional doElmReview elmPackages.elm-review
-            ++ lib.optional doElmTest elmPackages.elm-test
-            ++ lib.optional useElmOptimizeLevel2 elmPackages.elm-optimize-level-2
-            ++ lib.optional doMinification (if useTerser then terser else uglify-js)
-            ++ lib.optional doCompression brotli)
-            extraNativeBuildInputs
-          ];
-
-        dontPatch = true;
-        dontConfigure = true;
-
-        preBuildPhases = [
-          "prepareElmHomePhase"
-          (lib.optionalString doElmPackagePatches "patchElmPackagesPhase")
-          (lib.optionalString doElmFormat "elmFormatPhase")
-          (lib.optionalString doElmTest "elmTestPhase")
-        ];
-
-        prepareElmHomePhase = prepareElmHomeScript { inherit elmLock registryDat; };
-
-        patchElmPackagesPhase = lib.optionalString doElmPackagePatches (installPatchesScript elmPackagePatches);
-
-        elmFormatPhase = lib.optionalString doElmFormat ''
-          elm-format ${builtins.concatStringsSep " " elmFormatSourceFiles} --validate
-        '';
-
-        elmTestPhase = lib.optionalString doElmTest ''
-          if [ -d tests ]; then
-            elm-test ${builtins.concatStringsSep " " elmTestFlags}
-          else
-            echo "Skipping elm-test since no tests/ directory was found"
-          fi
-        '';
-
-        buildPhase =
-          let
-            buildScript =
-              if useElmOptimizeLevel2 then
-                let
-                  inputFiles =
-                    if builtins.isList entry then
-                      entry
-                    else
-                      [ entry ];
-                in
-                ''
-                elm-optimize-level-2 \
-                  ${builtins.concatStringsSep " " inputFiles} \
-                  ${lib.optionalString (optimizeLevel >= 3) "--optimize-speed"} \
-                  --output ".build/${output}"
-                ''
-              else
-                ''
-                elm make \
-                  ${builtins.concatStringsSep " " (if builtins.isList entry then entry else [ entry ])} \
-                  ${lib.optionalString enableDebugger "--debug"} \
-                  ${lib.optionalString (enableOptimizations && optimizeLevel == 1) "--optimize"} \
-                  --output ".build/${output}"
-                '';
-          in
+      buildPhase = let
+        buildScript = if useElmOptimizeLevel2 then
+          let inputFiles = if builtins.isList entry then entry else [ entry ];
+          in ''
+            elm-optimize-level-2 \
+              ${builtins.concatStringsSep " " inputFiles} \
+              ${lib.optionalString (optimizeLevel >= 3) "--optimize-speed"} \
+              --output ".build/${output}"
           ''
-          runHook preBuild
-
-          ${buildScript}
-
-          runHook postBuild
-          '';
-
-        preInstallPhases = [
-          (lib.optionalString doElmReview "elmReviewPhase")
-        ];
-
-        elmReviewPhase = lib.optionalString doElmReview ''
-          if [ -d review ]; then
-            elm-review ${builtins.concatStringsSep " " elmReviewFlags} --offline
-          else
-            echo "Skipping elm-review since no review/ directory was found"
-          fi
+        else ''
+          elm make \
+            ${
+              builtins.concatStringsSep " "
+              (if builtins.isList entry then entry else [ entry ])
+            } \
+            ${lib.optionalString enableDebugger "--debug"} \
+            ${
+              lib.optionalString (enableOptimizations && optimizeLevel == 1)
+              "--optimize"
+            } \
+            --output ".build/${output}"
         '';
+      in ''
+        runHook preBuild
 
-        installPhase = ''
-          runHook preInstall
+        ${buildScript}
 
-          cp -R .build "$out"
+        runHook postBuild
+      '';
 
-          runHook postInstall
-        '';
+      preInstallPhases = [ (lib.optionalString doElmReview "elmReviewPhase") ];
 
-        #
-        # Learn more: https://guide.elm-lang.org/optimization/asset_size
-        #
+      elmReviewPhase = lib.optionalString doElmReview ''
+        if [ -d review ]; then
+          elm-review ${builtins.concatStringsSep " " elmReviewFlags} --offline
+        else
+          echo "Skipping elm-review since no review/ directory was found"
+        fi
+      '';
 
-        preFixupPhases =
-          (lib.optional doMinification "minificationPhase")
-          ++ (lib.optional doCompression "compressionPhase")
-          ++ (lib.optional doReporting "reportingPhase")
-          ++ (lib.optional doContentHashing "contentHashingPhase")
-          ;
+      installPhase = ''
+        runHook preInstall
 
-        minificationPhase = lib.optional doMinification ''
-          ${minifier} "$out/${output}" \
-            --compress 'pure_funcs=[F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9],pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
-            | ${minifier} --mangle --output "$out/${outputMin}"
-        '';
+        cp -R .build "$out"
 
-        compressionPhase = lib.optional doCompression ''
-          gzip ${builtins.concatStringsSep " " gzipFlags} -c "$out/${toCompress}" > "$out/${toCompress}.gz"
-          brotli ${builtins.concatStringsSep " " brotliFlags} -c "$out/${toCompress}" > "$out/${toCompress}.br"
-        '';
+        runHook postInstall
+      '';
 
-        reportingPhase = lib.optionalString doReporting ''
-          js="${output}"
-          js_size=$(stat -c%s $out/$js)
-          echo "Compiled size: $js_size bytes ($js)"
+      #
+      # Learn more: https://guide.elm-lang.org/optimization/asset_size
+      #
 
-          ${lib.optionalString doMinification ''
-            min="${outputMin}"
-            min_size=$(stat -c%s $out/$min)
-            min_pct=$(( 100 * min_size / js_size ))
-            echo "Minified size: $min_size bytes ($min) (''${min_pct}% of compiled)"
-          ''}
+      preFixupPhases = (lib.optional doMinification "minificationPhase")
+        ++ (lib.optional doCompression "compressionPhase")
+        ++ (lib.optional doReporting "reportingPhase")
+        ++ (lib.optional doContentHashing "contentHashingPhase");
 
-          ${lib.optionalString doCompression ''
-            gz="${toCompress}.gz"
-            gz_size=$(stat -c%s $out/$gz)
-            gz_pct=$(( 100 * gz_size / js_size ))
-            br="${toCompress}.br"
-            br_size=$(stat -c%s $out/$br)
-            br_pct=$(( 100 * br_size / js_size ))
-            echo "Gzipped size: $gz_size bytes ($gz) (''${gz_pct}% of compiled)"
-            echo "Brotlied size: $br_size bytes ($br) (''${br_pct}% of compiled)"
-          ''}
-        '';
+      minificationPhase = lib.optional doMinification ''
+        ${minifier} "$out/${output}" \
+          --compress 'pure_funcs=[F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9],pure_getters,keep_fargs=false,unsafe_comps,unsafe' \
+          | ${minifier} --mangle --output "$out/${outputMin}"
+      '';
 
-        contentHashingPhase = lib.optionalString doContentHashing (
-          assert (hashLength >= 1 && hashLength <= 64)
-            || throw "hashLength must be between 1 and 64 inclusive: ${toString hashLength}";
+      compressionPhase = lib.optional doCompression ''
+        gzip ${
+          builtins.concatStringsSep " " gzipFlags
+        } -c "$out/${toCompress}" > "$out/${toCompress}.gz"
+        brotli ${
+          builtins.concatStringsSep " " brotliFlags
+        } -c "$out/${toCompress}" > "$out/${toCompress}.br"
+      '';
 
-          ''
-          manifest="$(mktemp)"
+      reportingPhase = lib.optionalString doReporting ''
+        js="${output}"
+        js_size=$(stat -c%s $out/$js)
+        echo "Compiled size: $js_size bytes ($js)"
 
-          echo "{" > "$manifest"
-          first_entry=1
+        ${lib.optionalString doMinification ''
+          min="${outputMin}"
+          min_size=$(stat -c%s $out/$min)
+          min_pct=$(( 100 * min_size / js_size ))
+          echo "Minified size: $min_size bytes ($min) (''${min_pct}% of compiled)"
+        ''}
 
-          for file in "$out"/*; do
-            hash=$(sha256sum "$file" | cut -c 1-${toString hashLength})
+        ${lib.optionalString doCompression ''
+          gz="${toCompress}.gz"
+          gz_size=$(stat -c%s $out/$gz)
+          gz_pct=$(( 100 * gz_size / js_size ))
+          br="${toCompress}.br"
+          br_size=$(stat -c%s $out/$br)
+          br_pct=$(( 100 * br_size / js_size ))
+          echo "Gzipped size: $gz_size bytes ($gz) (''${gz_pct}% of compiled)"
+          echo "Brotlied size: $br_size bytes ($br) (''${br_pct}% of compiled)"
+        ''}
+      '';
 
-            filename="''${file##*/}"
-            base="''${filename%%.*}"
-            ext="''${filename#*.}"
-            hashedFilename="$base.$hash.$ext"
+      contentHashingPhase = lib.optionalString doContentHashing
+        (assert (hashLength >= 1 && hashLength <= 64) || throw
+          "hashLength must be between 1 and 64 inclusive: ${
+            toString hashLength
+          }"; ''
+            manifest="$(mktemp)"
 
-            ${if keepFilesWithNoHashInFilenames then "cp" else "mv"} "$file" "$out/$hashedFilename"
-            echo ${if keepFilesWithNoHashInFilenames then "Copied" else "Moved"} "$filename" "───>" "$hashedFilename"
+            echo "{" > "$manifest"
+            first_entry=1
 
-            if [ $first_entry -eq 0 ]; then
-              echo "," >> "$manifest"
-            fi
-            first_entry=0
+            for file in "$out"/*; do
+              hash=$(sha256sum "$file" | cut -c 1-${toString hashLength})
 
-            printf '    "%s": "%s"' "$filename" "$hashedFilename" >> "$manifest"
-          done
+              filename="''${file##*/}"
+              base="''${filename%%.*}"
+              ext="''${filename#*.}"
+              hashedFilename="$base.$hash.$ext"
 
-          echo "" >> "$manifest"
-          echo "}" >> "$manifest"
+              ${
+                if keepFilesWithNoHashInFilenames then "cp" else "mv"
+              } "$file" "$out/$hashedFilename"
+              echo ${
+                if keepFilesWithNoHashInFilenames then "Copied" else "Moved"
+              } "$filename" "───>" "$hashedFilename"
 
-          cp "$manifest" "$out/manifest.json"
-          echo "Generated manifest.json"
+              if [ $first_entry -eq 0 ]; then
+                echo "," >> "$manifest"
+              fi
+              first_entry=0
+
+              printf '    "%s": "%s"' "$filename" "$hashedFilename" >> "$manifest"
+            done
+
+            echo "" >> "$manifest"
+            echo "}" >> "$manifest"
+
+            cp "$manifest" "$out/manifest.json"
+            echo "Generated manifest.json"
           '');
-      };
+    };
 }

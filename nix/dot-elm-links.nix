@@ -1,14 +1,6 @@
-{ runCommand
-
-, elmVersion
-, symbolicLinksToPackagesScript
-}:
-
-{ elmLock
-, registryDat
-}:
-
-runCommand "dot-elm-links" {} ''
+{ runCommand, elmVersion, symbolicLinksToPackagesScript, }:
+{ elmLock, registryDat, }:
+runCommand "dot-elm-links" { } ''
   root="$out/${elmVersion}/packages"
   mkdir -p "$root"
 

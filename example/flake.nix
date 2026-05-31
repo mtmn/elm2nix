@@ -7,26 +7,18 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, elm2nix }:
+  outputs = { self, nixpkgs, flake-utils, elm2nix, }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         fs = pkgs.lib.fileset;
         inherit (elm2nix.lib.elm2nix pkgs)
-          buildElmApplication
-          generateRegistryDat
-          prepareElmHomeScript
-          mkPatch
-          installPatchScript
-          dotElmLinks
-          symbolicLinksToPackagesScript
-          fetchElmPackage
-          ;
+          buildElmApplication generateRegistryDat prepareElmHomeScript mkPatch
+          installPatchScript dotElmLinks symbolicLinksToPackagesScript
+          fetchElmPackage;
 
         elmLock = ./elm.lock;
-        registryDat = generateRegistryDat {
-          inherit elmLock;
-        };
+        registryDat = generateRegistryDat { inherit elmLock; };
 
         exampleFetchElmPackage = fetchElmPackage {
           author = "elm";
@@ -35,17 +27,13 @@
           sha256 = "0863nw2hhbpm3s03lm1imi5x28wwknzrwg2p79s5mydgvdvgwjf0";
         };
 
-        exampleSymbolicLinksToPackagesScript = symbolicLinksToPackagesScript {
-          inherit elmLock;
-        };
+        exampleSymbolicLinksToPackagesScript =
+          symbolicLinksToPackagesScript { inherit elmLock; };
 
-        exampleDotElmLinks = dotElmLinks {
-          inherit elmLock registryDat;
-        };
+        exampleDotElmLinks = dotElmLinks { inherit elmLock registryDat; };
 
-        examplePrepareElmHomeScript = prepareElmHomeScript {
-          inherit elmLock registryDat;
-        };
+        examplePrepareElmHomeScript =
+          prepareElmHomeScript { inherit elmLock registryDat; };
 
         lydellBrowser = mkPatch elm2nix.lib.patches.lydellBrowser;
         lydellHtml = mkPatch elm2nix.lib.patches.lydellHtml;
@@ -59,12 +47,7 @@
 
         elmSrc = fs.toSource {
           root = ./.;
-          fileset = fs.unions [
-            ./review
-            ./src
-            ./tests
-            ./elm.json
-          ];
+          fileset = fs.unions [ ./review ./src ./tests ./elm.json ];
         };
 
         example = buildElmApplication {
@@ -73,7 +56,7 @@
           elmLock = ./elm.lock;
         };
 
-        testScripts = pkgs.runCommand "test-scripts" {} ''
+        testScripts = pkgs.runCommand "test-scripts" { } ''
           mkdir "$out"
           echo "${examplePrepareElmHomeScript}" > "$out/examplePrepareElmHomeScript.txt"
           echo "${exampleSymbolicLinksToPackagesScript}" > "$out/exampleSymbolicLinksToPackagesScript.txt"
@@ -82,8 +65,7 @@
           echo "${installLydellVirtualDomScript}" > "$out/installLydellVirtualDomScript.txt"
           echo "${installOmnibsElmCssScript}" > "$out/installOmnibsElmCssScript.txt"
         '';
-      in
-      {
+      in {
         devShells.default = pkgs.mkShell {
           name = "example";
 
@@ -102,16 +84,8 @@
         };
 
         packages = rec {
-          inherit
-            exampleFetchElmPackage
-            exampleDotElmLinks
-            example
-            lydellBrowser
-            lydellHtml
-            lydellVirtualDom
-            omnibsElmCss
-            testScripts
-            ;
+          inherit exampleFetchElmPackage exampleDotElmLinks example
+            lydellBrowser lydellHtml lydellVirtualDom omnibsElmCss testScripts;
 
           default = example;
 
@@ -130,11 +104,7 @@
 
           elmSafeVirtualDomExample = example.override {
             name = "elm-safe-virtual-dom-example";
-            elmPackagePatches = [
-              lydellBrowser
-              lydellHtml
-              lydellVirtualDom
-            ];
+            elmPackagePatches = [ lydellBrowser lydellHtml lydellVirtualDom ];
           };
 
           #
@@ -262,35 +232,15 @@
         };
 
         checks = {
-          inherit
-            exampleFetchElmPackage
-            exampleDotElmLinks
-            example
-            lydellBrowser
-            lydellHtml
-            lydellVirtualDom
-            omnibsElmCss
-            testScripts
-            ;
+          inherit exampleFetchElmPackage exampleDotElmLinks example
+            lydellBrowser lydellHtml lydellVirtualDom omnibsElmCss testScripts;
 
           inherit (self.packages.${system})
-            debuggedExample
-            formattingCheckedExample
-            elmSafeVirtualDomExample
-            elmSafeVirtualDomElmCssExample
-            testedExample
-            reviewedExample
-            optimizedExample
-            optimized2Example
-            optimized3Example
-            combined1Example
-            minifiedExample
-            compressedExample
-            reportedExample
-            hashedExample
-            finalExample
-            ;
+            debuggedExample formattingCheckedExample elmSafeVirtualDomExample
+            elmSafeVirtualDomElmCssExample testedExample reviewedExample
+            optimizedExample optimized2Example optimized3Example
+            combined1Example minifiedExample compressedExample reportedExample
+            hashedExample finalExample;
         };
-      }
-    );
+      });
 }

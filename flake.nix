@@ -1,17 +1,16 @@
 {
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        elm2nix = pkgs.callPackage ./nix/elm2nix.nix {};
+        elm2nix = pkgs.callPackage ./nix/elm2nix.nix { };
 
-        mkApp = { drv, description }: {
+        mkApp = { drv, description, }: {
           type = "app";
           program = "${drv}";
           meta.description = description;
         };
-      in
-      {
+      in {
         devShells.default = pkgs.mkShell {
           name = "elm2nix";
 
@@ -70,15 +69,10 @@
           };
         };
 
-        checks = {
-          inherit elm2nix;
-        };
-      }
-    ) // {
-      lib =
-        rec {
-          elm2nix = pkgs: pkgs.callPackage ./nix {};
-
+        checks = { inherit elm2nix; };
+      }) // {
+        lib = rec {
+          elm2nix = pkgs: pkgs.callPackage ./nix { };
           patches = {
             #
             # N.B. The values of all the keys in this attribute set
@@ -146,5 +140,5 @@
             ];
           };
         };
-    };
+      };
 }

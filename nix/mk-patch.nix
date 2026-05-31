@@ -1,17 +1,7 @@
-{ fetchFromGitHub, stdenv }:
-
-{ fromOwner
-, toOwner
-, repo
-, version
-, rev
-, hash
-}:
-
-let
-  path = "${toOwner}/${repo}/${version}";
-in
-stdenv.mkDerivation {
+{ fetchFromGitHub, stdenv, }:
+{ fromOwner, toOwner, repo, version, rev, hash, }:
+let path = "${toOwner}/${repo}/${version}";
+in stdenv.mkDerivation {
   inherit version;
 
   pname = "${fromOwner}-${repo}";
@@ -36,7 +26,5 @@ stdenv.mkDerivation {
     cp -R src "$root/src"
   '';
 
-  passthru = {
-    inherit path;
-  };
+  passthru = { inherit path; };
 }

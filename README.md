@@ -107,6 +107,10 @@ This will generate a `result/` directory containing your compiled application in
 
 You can view a full working example in the [`example/`](./example) directory.
 
+## Lix Compatibility
+
+This fork uses a `fetchElmPackage` that passes `sha256` directly to `fetchzip`, making it compatible with [Lix](https://lix.systems/) (which lacks `builtins.convertHash`).
+
 ## About
 
 I was looking for a practical and interesting project to work on that might be beneficial to either the Elm or Haskell community, while at the same time, would extend my skills within functional programming. When I researched [`cachix/elm2nix`](https://github.com/cachix/elm2nix) it seemed to fit the bill because it combined 3 technologies I love, [Elm](https://elm-lang.org/), [Haskell](https://www.haskell.org/), and [Nix](https://nixos.org/), to produce a useful tool for Elm developers. At the time, I knew how to use each of the technologies to varying degrees but I didn't have a deep understanding of how `cachix/elm2nix` worked and why it needed to work that way. As a result, it seemed like a great project to satisfy my goals. Thankfully it turned out well. I learned so much about Elm, Haskell, and Nix that I didn't know before and I was able to find little ways to positively improve upon the project.
