@@ -1,5 +1,7 @@
-{ elmHome, elmVersion, }:
-drv:
+{
+  elmHome,
+  elmVersion,
+}: drv:
 # A derivation of a patched package, i.e. one created with mkPatch
 let
   packagesDir = "${elmHome}/${elmVersion}/packages";

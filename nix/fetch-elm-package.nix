@@ -1,5 +1,9 @@
-{ fetchzip }:
-{ author, package, version, sha256, }:
+{fetchzip}: {
+  author,
+  package,
+  version,
+  sha256,
+}:
 fetchzip {
   name = "${author}-${package}-${version}";
   url = "https://github.com/${author}/${package}/archive/${version}.tar.gz";
